@@ -548,6 +548,9 @@ board[1][7] = Bishop(1, 7, True)
 board[6][0] = Bishop(6, 0, False)
 board[1][0] = Bishop(1, 0, False)
 
+board[3][0] = Queen(3, 0, False)
+board[3][7] = Queen(3, 7, True)
+
 pygame.init()
 
 # set color with rgb
