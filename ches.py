@@ -33,9 +33,7 @@ class Pawn:
                 self.y = mY
             if mY == self.y - 1 and board[mX][mY] == 0 and mX == self.x:
                 self.y = mY
-        # if mX == self.x and mY == self.y:
-        #    print('No move')
-        #    return False
+
         if self.x == initX and self.y == initY:
             print('Invalid move')
             return False
@@ -160,9 +158,7 @@ class Castle:
 
     def move(self, mX, mY):
         moves = self.calcPossMoves()
-        print(moves)
         if (mX, mY) in moves:
-            print('can move')
             self.x = mX
             self.y = mY
             return True
@@ -271,14 +267,11 @@ class Bishop:
                     finalLeftDown.append(comp)
                 else:
                     end = True
-        print(leftUp, leftDown, rightDown, rightUp)
         return finalLeftUp + finalLeftDown + finalRightDown + finalRightUp
 
     def move(self, mX, mY):
         moves = self.calcPossMoves()
-        print(moves)
         if (mX, mY) in moves:
-            print('can move')
             self.x = mX
             self.y = mY
             return True
@@ -484,9 +477,7 @@ class Queen:
 
     def move(self, mX, mY):
         moves = self.calcPossMoves()
-        print(moves)
         if (mX, mY) in moves:
-            print('can move')
             self.x = mX
             self.y = mY
             return True
@@ -506,11 +497,9 @@ class Knight:
     def calcPossMoves(self):
         moves = [(self.x + 1, self.y + 2), (self.x - 1, self.y + 2), (self.x - 1, self.y - 2), (self.x + 1, self.y - 2), (self.x + 2, self.y + 1),
                  (self.x + 2, self.y - 1), (self.x - 2, self.y + 1), (self.x - 2, self.y - 1)]
-        print(moves)
         possMoves = []
         for i, move in enumerate(moves):
             if 7 >= move[0] >= 0 and 7 >= move[1] >= 0:
-                print(move)
                 if board[move[0]][move[1]] == 0 or isOppPiece(self.colour, move[0], move[1]):
                     possMoves.append(move)
 
@@ -518,9 +507,7 @@ class Knight:
 # [(6, 9), (4, 9), (4, 5), (7, 8), (7, 6), (3, 8), (3, 6)]
     def move(self, mX, mY):
         moves = self.calcPossMoves()
-        print(moves)
         if (mX, mY) in moves:
-            print('can move')
             self.x = mX
             self.y = mY
             return True
@@ -551,7 +538,6 @@ def getCoors(pos):
         pos = (pos[0], 7)
 
     pos = (pos[0], 7 - pos[1])
-    print(pos, board[pos[0]][pos[1]])
     return pos
 
 
@@ -661,9 +647,6 @@ for x in range(len(board)):
             gameDisplay.blit(spritesheet, (x * size + (size - 83) / 2, (7 - y) * size + (size - 83) / 2),
                              cells[board[x][y].id])
 pygame.display.update()
-print('------------------')
-[print(row) for row in board]
-print('------------------')
 while not gameExit:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -676,24 +659,15 @@ while not gameExit:
                 if board[pos1[0]][pos1[1]].move(pos2[0], pos2[1]):
                     turn = not turn
                     x, y = board[pos1[0]][pos1[1]].x, board[pos1[0]][pos1[1]].y
-                    # print(x,y)
-                    print(board[pos1[0]][pos1[1]], '-=----=-=-=-=-=====')
                     board[pos2[0]][pos2[1]] = board[pos1[0]][pos1[1]]
                     board[pos1[0]][pos1[1]] = 0
-                    print(board[pos2[0]][pos2[1]])
-                    print(board[pos1[0]][pos1[1]], '-=----=-=-=-=-=====')
                     pygame.draw.rect(gameDisplay, boardColours[x][7 - y], [size * (x), size * (7 - y), size, size])
-                    # print(board[pos2[0]][pos2[1]], 'pos')
-                    # [print(row) for row in board]
                     pygame.draw.rect(gameDisplay, boardColours[pos1[0]][7 - pos1[1]],
                                      [size * (pos1[0]), size * (7 - pos1[1]), size, size])
                     gameDisplay.blit(spritesheet,
                                      (pos2[0] * size + (size - 83) / 2, (7 - pos2[1]) * size + (size - 83) / 2),
                                      cells[board[pos2[0]][pos2[1]].id])
-                    # if (8 * y + x) % 2 == 0:
-                    #     pygame.draw.rect(gameDisplay, white, [size, size, size, size])
-                    # else:
-                    #     pygame.draw.rect(gameDisplay, black, [size, size, size, size])
+
                     pygame.display.update()
 
                 else:
@@ -705,6 +679,5 @@ while not gameExit:
                     pos1 = None
 
                 else:
-                    print(board[pos[0]][pos[1]])
                     pos1 = pos
     # draw((0,0), gameDisplay)
