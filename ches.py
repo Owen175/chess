@@ -203,7 +203,6 @@ class Bishop:
                 else:
                     end = True
 
-
         rightDown = []
         cont = True
         count = 0
@@ -250,7 +249,6 @@ class Bishop:
                 else:
                     end = True
 
-
         leftDown = []
         cont = True
         count = 0
@@ -286,6 +284,7 @@ class Bishop:
             return True
         else:
             return False
+
 
 class Queen:
     def __init__(self, x, y, colour):
@@ -495,6 +494,40 @@ class Queen:
             return False
 
 
+class Knight:
+    def __init__(self, x, y, colour):
+        self.colour = colour
+        self.x = x
+        self.y = y
+        self.id = 3
+        if colour:
+            self.id += 6
+
+    def calcPossMoves(self):
+        moves = [(self.x + 1, self.y + 2), (self.x - 1, self.y + 2), (self.x - 1, self.y - 2), (self.x + 1, self.y - 2), (self.x + 2, self.y + 1),
+                 (self.x + 2, self.y - 1), (self.x - 2, self.y + 1), (self.x - 2, self.y - 1)]
+        print(moves)
+        possMoves = []
+        for i, move in enumerate(moves):
+            if 7 >= move[0] >= 0 and 7 >= move[1] >= 0:
+                print(move)
+                if board[move[0]][move[1]] == 0 or isOppPiece(self.colour, move[0], move[1]):
+                    possMoves.append(move)
+
+        return possMoves
+# [(6, 9), (4, 9), (4, 5), (7, 8), (7, 6), (3, 8), (3, 6)]
+    def move(self, mX, mY):
+        moves = self.calcPossMoves()
+        print(moves)
+        if (mX, mY) in moves:
+            print('can move')
+            self.x = mX
+            self.y = mY
+            return True
+        else:
+            return False
+
+
 def isOppPiece(colour, x, y):
     if board[x][y] != 0:
         if board[x][y].colour != colour:
@@ -547,6 +580,11 @@ board[6][7] = Bishop(6, 7, True)
 board[1][7] = Bishop(1, 7, True)
 board[6][0] = Bishop(6, 0, False)
 board[1][0] = Bishop(1, 0, False)
+
+board[2][7] = Knight(2, 7, True)
+board[5][7] = Knight(5, 7, True)
+board[2][0] = Knight(2, 0, False)
+board[5][0] = Knight(5, 0, False)
 
 board[3][0] = Queen(3, 0, False)
 board[3][7] = Queen(3, 7, True)
