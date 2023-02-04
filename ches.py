@@ -296,6 +296,205 @@ class Queen:
         if colour:
             self.id += 6
 
+    def calcPossMoves(self):
+        rightUp = []
+        cont = True
+        count = 0
+        while cont:
+            if self.x < 7 and self.y < 7:
+                count += 1
+                if self.x + count == 7 or self.y + count == 7:
+                    cont = False
+                rightUp.append((self.x + count, self.y + count))
+            else:
+                cont = False
+        finalRightUp = []
+        end = False
+        for j, comp in enumerate(rightUp):
+            if not end:
+                if isOppPiece(self.colour, comp[0], comp[1]):
+                    finalRightUp.append(comp)
+                    end = True
+                elif board[comp[0]][comp[1]] == 0:
+                    finalRightUp.append(comp)
+                else:
+                    end = True
+
+        rightDown = []
+        cont = True
+        count = 0
+        while cont:
+            if self.x < 7 and self.y > 0:
+                count += 1
+                if self.x + count == 7 or self.y - count == 0:
+                    cont = False
+                rightDown.append((self.x + count, self.y - count))
+            else:
+                cont = False
+        finalRightDown = []
+        end = False
+        for j, comp in enumerate(rightDown):
+            if not end:
+                if isOppPiece(self.colour, comp[0], comp[1]):
+                    finalRightDown.append(comp)
+                    end = True
+                elif board[comp[0]][comp[1]] == 0:
+                    finalRightDown.append(comp)
+                else:
+                    end = True
+
+        leftUp = []
+        cont = True
+        count = 0
+        while cont:
+            if self.x > 0 and self.y < 7:
+                count += 1
+                if self.x - count == 0 or self.y + count == 7:
+                    cont = False
+                leftUp.append((self.x - count, self.y + count))
+            else:
+                cont = False
+        finalLeftUp = []
+        end = False
+        for j, comp in enumerate(leftUp):
+            if not end:
+                if isOppPiece(self.colour, comp[0], comp[1]):
+                    finalLeftUp.append(comp)
+                    end = True
+                elif board[comp[0]][comp[1]] == 0:
+                    finalLeftUp.append(comp)
+                else:
+                    end = True
+
+        leftDown = []
+        cont = True
+        count = 0
+        while cont:
+            if self.x > 0 and self.y > 0:
+                count += 1
+                if self.x - count == 0 or self.y - count == 7:
+                    cont = False
+                leftDown.append((self.x - count, self.y - count))
+            else:
+                cont = False
+        finalLeftDown = []
+        end = False
+        for j, comp in enumerate(leftDown):
+            if not end:
+                if isOppPiece(self.colour, comp[0], comp[1]):
+                    finalLeftDown.append(comp)
+                    end = True
+                elif board[comp[0]][comp[1]] == 0:
+                    finalLeftDown.append(comp)
+                else:
+                    end = True
+
+        cont = True
+        count = 0
+        possListRight = []
+        while cont:
+            if self.x < 7:
+                count += 1
+                if self.x + count == 7:
+                    cont = False
+                possListRight.append((self.x + count, self.y))
+            else:
+                cont = False
+        finalPossListRight = []
+        end = False
+        for j, comp in enumerate(possListRight):
+            if not end:
+                if isOppPiece(self.colour, comp[0], comp[1]):
+                    finalPossListRight.append(comp)
+                    end = True
+                elif board[comp[0]][comp[1]] == 0:
+                    finalPossListRight.append(comp)
+                else:
+                    end = True
+
+        cont = True
+        count = 0
+        possListLeft = []
+        while cont:
+            if self.x > 0:
+                count += 1
+                if self.x - count == 0:
+                    cont = False
+                possListLeft.append((self.x - count, self.y))
+            else:
+                cont = False
+        finalPossListLeft = []
+        end = False
+        for j, comp in enumerate(possListLeft):
+            if not end:
+                if isOppPiece(self.colour, comp[0], comp[1]):
+                    finalPossListLeft.append(comp)
+                    end = True
+                elif board[comp[0]][comp[1]] == 0:
+                    finalPossListLeft.append(comp)
+                else:
+                    end = True
+
+        cont = True
+        count = 0
+        possListUp = []
+        while cont:
+            if self.y < 7:
+                count += 1
+                if self.y + count == 7:
+                    cont = False
+                possListUp.append((self.x, self.y + count))
+            else:
+                cont = False
+        finalPossListUp = []
+        end = False
+        for j, comp in enumerate(possListUp):
+            if not end:
+                if isOppPiece(self.colour, comp[0], comp[1]):
+                    finalPossListUp.append(comp)
+                    end = True
+                elif board[comp[0]][comp[1]] == 0:
+                    finalPossListUp.append(comp)
+                else:
+                    end = True
+
+        cont = True
+        count = 0
+        possListDown = []
+        while cont:
+            if self.y > 0:
+                count += 1
+                if self.y - count == 0:
+                    cont = False
+                possListDown.append((self.x, self.y - count))
+            else:
+                cont = False
+        finalPossListDown = []
+        end = False
+        for j, comp in enumerate(possListDown):
+            if not end:
+                if isOppPiece(self.colour, comp[0], comp[1]):
+                    finalPossListDown.append(comp)
+                    end = True
+                elif board[comp[0]][comp[1]] == 0:
+                    finalPossListDown.append(comp)
+                else:
+                    end = True
+
+        return finalPossListDown + finalPossListUp + finalPossListLeft + finalPossListRight + finalRightDown + finalRightUp + finalLeftUp + finalLeftDown
+
+    def move(self, mX, mY):
+        moves = self.calcPossMoves()
+        print(moves)
+        if (mX, mY) in moves:
+            print('can move')
+            self.x = mX
+            self.y = mY
+            return True
+        else:
+            return False
+
+
 def isOppPiece(colour, x, y):
     if board[x][y] != 0:
         if board[x][y].colour != colour:
