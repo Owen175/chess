@@ -193,7 +193,7 @@ class Bishop:
                 cont = False
         finalRightUp = []
         end = False
-        for j, comp in enumerate(finalRightUp):
+        for j, comp in enumerate(rightUp):
             if not end:
                 if isOppPiece(self.colour, comp[0], comp[1]):
                     finalRightUp.append(comp)
@@ -217,7 +217,7 @@ class Bishop:
                 cont = False
         finalRightDown = []
         end = False
-        for j, comp in enumerate(finalRightDown):
+        for j, comp in enumerate(rightDown):
             if not end:
                 if isOppPiece(self.colour, comp[0], comp[1]):
                     finalRightDown.append(comp)
@@ -240,7 +240,7 @@ class Bishop:
                 cont = False
         finalLeftUp = []
         end = False
-        for j, comp in enumerate(finalLeftUp):
+        for j, comp in enumerate(leftUp):
             if not end:
                 if isOppPiece(self.colour, comp[0], comp[1]):
                     finalLeftUp.append(comp)
@@ -264,7 +264,7 @@ class Bishop:
                 cont = False
         finalLeftDown = []
         end = False
-        for j, comp in enumerate(finalLeftDown):
+        for j, comp in enumerate(leftDown):
             if not end:
                 if isOppPiece(self.colour, comp[0], comp[1]):
                     finalLeftDown.append(comp)
@@ -273,7 +273,7 @@ class Bishop:
                     finalLeftDown.append(comp)
                 else:
                     end = True
-
+        print(leftUp, leftDown, rightDown, rightUp)
         return finalLeftUp + finalLeftDown + finalRightDown + finalRightUp
 
     def move(self, mX, mY):
@@ -286,6 +286,15 @@ class Bishop:
             return True
         else:
             return False
+
+class Queen:
+    def __init__(self, x, y, colour):
+        self.x = x
+        self.y = y
+        self.colour = colour
+        self.id = 1
+        if colour:
+            self.id += 6
 
 def isOppPiece(colour, x, y):
     if board[x][y] != 0:
