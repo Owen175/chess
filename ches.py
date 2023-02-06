@@ -856,19 +856,25 @@ def getValidMoves(colour):
 def checkForMate(colour):
     global board
     allMoves = getValidMoves(colour)
-    for move in allMoves:
-        newpos, oldpos = move
-        oldNew = board[newpos[0]][newpos[1]]
-        oldOld = board[oldpos[0]][oldpos[1]]
-        board[oldpos[0]][oldpos[1]] = 0
-        board[newpos[0]][newpos[1]] = oldOld
-        if not checkForCheck(colour):
+    # Check if king moves work properly -
+    if checkForCheck(colour):
+        for move in allMoves:
+            newpos, oldpos = move
+            oldNew = board[newpos[0]][newpos[1]]
+            oldOld = board[oldpos[0]][oldpos[1]]
+            board[oldpos[0]][oldpos[1]] = 0
+            board[newpos[0]][newpos[1]] = oldOld
+            if not checkForCheck(colour):
+                board[oldpos[0]][oldpos[1]] = oldOld
+                board[newpos[0]][newpos[1]] = oldNew
+                return False
             board[oldpos[0]][oldpos[1]] = oldOld
             board[newpos[0]][newpos[1]] = oldNew
-            return False
-        board[oldpos[0]][oldpos[1]] = oldOld
-        board[newpos[0]][newpos[1]] = oldNew
-    return True
+        return True
+    else:
+        if allMoves == []:
+            return 'SM'
+    return False
 
 
 
@@ -1028,7 +1034,9 @@ while not gameExit:
                         oG2 = board[pos2[0]][pos2[1]]
                         board[pos2[0]][pos2[1]] = board[pos1[0]][pos1[1]]
                         board[pos1[0]][pos1[1]] = 0
-                        potential_checked_king_pos = findKings(not turn)
+                        if checkForCheck(turn):
+                            nextCheck = True
+                            checkColour = turn
                         if nextCheck:
                             if checkForCheck(checkColour):
                                 noDraw = True
@@ -1039,6 +1047,7 @@ while not gameExit:
                                 nextCheck = False
 
                         if checkForCheck(not turn):
+                            print('check')
                             nextCheck = True
                             checkColour = not turn
                             if turn == True:
