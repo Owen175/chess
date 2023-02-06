@@ -63,6 +63,9 @@ class Pawn:
                     if isOppPiece(self.colour, self.x + 1, self.y - 1):
                         moves.append((self.x + 1, self.y - 1))
                 moves.append((self.x, self.y - 1))
+            if self.y > 0:
+                if board[self.x][self.y - 1] == 0:
+                    moves.append((self.x, self.y - 1))
         else:
             if self.y < 7:
                 if self.x < 7:
@@ -72,8 +75,17 @@ class Pawn:
                     if isOppPiece(self.colour, self.x - 1, self.y + 1):
                         moves.append((self.x - 1, self.y + 1))
                 moves.append((self.x, self.y + 1))
+            if self.y < 7:
+                if board[self.x][self.y + 1] == 0:
+                    moves.append((self.x, self.y + 1))
+        # Add the rest
 
-        return '_', moves
+        movesWithCoords = []
+
+        for m in moves:
+            movesWithCoords.append((m, (self.x, self.y)))
+
+        return moves, '_', movesWithCoords
 
 
 class Castle:
@@ -182,11 +194,17 @@ class Castle:
                 else:
                     end = True
                 movables.append(comp)
+        moves = finalPossListDown + finalPossListUp + finalPossListLeft + finalPossListRight
 
-        return finalPossListDown + finalPossListUp + finalPossListLeft + finalPossListRight, movables
+        movesWithCoords = []
+
+        for m in moves:
+            movesWithCoords.append((m, (self.x, self.y)))
+
+        return moves, movables, movesWithCoords
 
     def move(self, mX, mY):
-        moves, _ = self.calcPossMoves()
+        moves, _, _ = self.calcPossMoves()
         if (mX, mY) in moves:
             if self.colour == turn:
                 self.x = mX
@@ -302,10 +320,18 @@ class Bishop:
                 else:
                     end = True
                 movables.append(comp)
-        return finalLeftUp + finalLeftDown + finalRightDown + finalRightUp, movables
+
+        moves = finalLeftUp + finalLeftDown + finalRightDown + finalRightUp
+
+        movesWithCoords = []
+
+        for m in moves:
+            movesWithCoords.append((m, (self.x, self.y)))
+
+        return moves, movables, movesWithCoords
 
     def move(self, mX, mY):
-        moves, _ = self.calcPossMoves()
+        moves, _, _ = self.calcPossMoves()
         if (mX, mY) in moves:
             if self.colour == turn:
                 self.x = mX
@@ -519,10 +545,16 @@ class Queen:
                     end = True
                 movables.append(comp)
 
-        return finalPossListDown + finalPossListUp + finalPossListLeft + finalPossListRight + finalRightDown + finalRightUp + finalLeftUp + finalLeftDown, movables
+        moves = finalPossListDown + finalPossListUp + finalPossListLeft + finalPossListRight + finalRightDown + finalRightUp + finalLeftUp + finalLeftDown
+        movesWithCoords = []
+
+        for m in moves:
+            movesWithCoords.append((m, (self.x, self.y)))
+
+        return moves, movables, movesWithCoords
 
     def move(self, mX, mY):
-        moves, _ = self.calcPossMoves()
+        moves, _, _ = self.calcPossMoves()
         if (mX, mY) in moves:
             if self.colour == turn:
                 self.x = mX
@@ -553,10 +585,15 @@ class Knight:
                 if board[move[0]][move[1]] == 0 or isOppPiece(self.colour, move[0], move[1]):
                     possMoves.append(move)
 
-        return possMoves, movables
+        movesWithCoords = []
+
+        for m in possMoves:
+            movesWithCoords.append((m, (self.x, self.y)))
+
+        return possMoves, movables, movesWithCoords
 
     def move(self, mX, mY):
-        moves, _ = self.calcPossMoves()
+        moves, _, _ = self.calcPossMoves()
         if (mX, mY) in moves:
             if self.colour == turn:
                 self.x = mX
@@ -582,15 +619,20 @@ class King:
         movableSquares = []
         for i, move in enumerate(moves):
             if 7 >= move[0] >= 0 and 7 >= move[1] >= 0:
-                if not checkForCheck(move, self.colour):
+                if not checkForCheck(self.colour):
                     movableSquares.append(move)
                     if board[move[0]][move[1]] == 0 or isOppPiece(self.colour, move[0], move[1]):
                         possMoves.append(move)
 
-        return possMoves, movableSquares
+        movesWithCoords = []
+
+        for m in possMoves:
+            movesWithCoords.append((m, (self.x, self.y)))
+
+        return possMoves, movableSquares, movesWithCoords
 
     def move(self, mX, mY):
-        moves, _ = self.calcPossMoves()
+        moves, _, _ = self.calcPossMoves()
         if (mX, mY) in moves:
             if self.colour == turn:
                 self.x = mX
@@ -600,63 +642,65 @@ class King:
             return False
 
 
-def checkForCheck(move, colour):
+def checkForCheck(colour):
+    move = findKings(colour)
+
     x, y = move
     diagonals = checkDiagonals(move, colour)
     horizontals = checkHorizontals(move, colour)
     lShapes = checkLShapes(move)
-
+    returnStatement = False
     if not colour:
         if y < 7 and x > 0:
             if type(board[x - 1][y + 1]) == Pawn and board[x - 1][y + 1].colour:
-                return True
+                returnStatement = True
         if y < 7 and x < 7:
             if type(board[x + 1][y + 1]) == Pawn and board[x + 1][y + 1].colour:
-                return True
+                returnStatement = True
 
         for danger in diagonals:
             tp = type(board[danger[0]][danger[1]])
             if tp == Bishop or tp == Queen:
                 if board[danger[0]][danger[1]].colour:
-                    return True
+                    returnStatement = True
 
         for danger in horizontals:
             tp = type(board[danger[0]][danger[1]])
             if tp == Castle or tp == Queen:
                 if board[danger[0]][danger[1]].colour:
-                    return True
+                    returnStatement = True
 
         for danger in lShapes:
             tp = type(board[danger[0]][danger[1]])
             if tp == Knight:
                 if board[danger[0]][danger[1]].colour:
-                    return True
+                    returnStatement = True
     else:
         if y > 0 and x > 0:
             if type(board[x - 1][y - 1]) == Pawn and not board[x - 1][y - 1].colour:
-                return True
+                returnStatement = True
         if y > 0 and x < 7:
             if type(board[x + 1][y - 1]) == Pawn and not board[x + 1][y - 1].colour:
-                return True
+                returnStatement = True
 
         for danger in diagonals:
             tp = type(board[danger[0]][danger[1]])
             if tp == Bishop or tp == Queen:
                 if not board[danger[0]][danger[1]].colour:
-                    return True
+                    returnStatement = True
 
         for danger in horizontals:
             tp = type(board[danger[0]][danger[1]])
             if tp == Castle or tp == Queen:
                 if not board[danger[0]][danger[1]].colour:
-                    return True
+                    returnStatement = True
 
         for danger in lShapes:
             tp = type(board[danger[0]][danger[1]])
             if tp == Knight:
                 if not board[danger[0]][danger[1]].colour:
-                    return True
-    return False
+                    returnStatement = True
+    return returnStatement
 
 def checkLShapes(move):
     x, y = move
@@ -791,12 +835,42 @@ def makeMovableGrids():
         for x in range(8):
             if board[x][y] != 0:
                 if board[x][y].colour == True:
-                    _, moves = board[x][y].calcPossMoves()
+                    _, moves, _ = board[x][y].calcPossMoves()
                     blackList.extend(moves)
                 else:
-                    _, moves = board[x][y].calcPossMoves()
+                    _, moves, _ = board[x][y].calcPossMoves()
                     whiteList.extend(moves)
     return list(set(blackList)), list(set(whiteList))
+
+def getValidMoves(colour):
+    validMoves = []
+    for y in range(8):
+        for x in range(8):
+            if board[x][y] != 0:
+                if board[x][y].colour == colour:
+                    _, _, moves = board[x][y].calcPossMoves()
+                    validMoves.extend(moves)
+    validMoves = list(set(validMoves))
+    return validMoves
+
+def checkForMate(colour):
+    global board
+    allMoves = getValidMoves(colour)
+    for move in allMoves:
+        newpos, oldpos = move
+        oldNew = board[newpos[0]][newpos[1]]
+        oldOld = board[oldpos[0]][oldpos[1]]
+        board[oldpos[0]][oldpos[1]] = 0
+        board[newpos[0]][newpos[1]] = oldOld
+        if not checkForCheck(colour):
+            board[oldpos[0]][oldpos[1]] = oldOld
+            board[newpos[0]][newpos[1]] = oldNew
+            return False
+        board[oldpos[0]][oldpos[1]] = oldOld
+        board[newpos[0]][newpos[1]] = oldNew
+    return True
+
+
 
 
 def isOppPiece(colour, x, y):
@@ -854,15 +928,15 @@ board[0][7] = Castle(0, 7, True)
 board[7][0] = Castle(7, 0, False)
 board[0][0] = Castle(0, 0, False)
 
-board[6][7] = Bishop(6, 7, True)
-board[1][7] = Bishop(1, 7, True)
-board[6][0] = Bishop(6, 0, False)
-board[1][0] = Bishop(1, 0, False)
+board[5][7] = Bishop(5, 7, True)
+board[2][7] = Bishop(2, 7, True)
+board[5][0] = Bishop(5, 0, False)
+board[2][0] = Bishop(2, 0, False)
 
-board[2][7] = Knight(2, 7, True)
-board[5][7] = Knight(5, 7, True)
-board[2][0] = Knight(2, 0, False)
-board[5][0] = Knight(5, 0, False)
+board[1][7] = Knight(1, 7, True)
+board[6][7] = Knight(6, 7, True)
+board[1][0] = Knight(1, 0, False)
+board[6][0] = Knight(6, 0, False)
 
 board[3][0] = Queen(3, 0, False)
 board[3][7] = Queen(3, 7, True)
@@ -956,8 +1030,7 @@ while not gameExit:
                         board[pos1[0]][pos1[1]] = 0
                         potential_checked_king_pos = findKings(not turn)
                         if nextCheck:
-                            checkedpos = findKings(checkColour)
-                            if checkForCheck(checkedpos, checkColour):
+                            if checkForCheck(checkColour):
                                 noDraw = True
                                 print('Still in check')
                                 board[pos2[0]][pos2[1]].x = pos1[0]
@@ -965,9 +1038,7 @@ while not gameExit:
                             else:
                                 nextCheck = False
 
-                        print(checkForCheck(potential_checked_king_pos, not turn), 'CFC')
-                        if checkForCheck(potential_checked_king_pos, not turn):
-                            print('check')
+                        if checkForCheck(not turn):
                             nextCheck = True
                             checkColour = not turn
                             if turn == True:
@@ -987,11 +1058,14 @@ while not gameExit:
                                              cells[board[pos2[0]][pos2[1]].id])
 
                             pygame.display.update()
+                            if checkForMate(not turn):
+                                print('MATE')
                             turn = not turn
                         else:
                             board[pos1[0]][pos1[1]] = board[pos2[0]][pos2[1]]
                             board[pos2[0]][pos2[1]] = oG2
-
+                            if checkForMate(not turn):
+                                print('MATE')
                         #May need to revert the x, y in the class too.
                         # blackG, whiteG = makeMovableGrids()
                         # checkForCheckmate(blackG, whiteG)
