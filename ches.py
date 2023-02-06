@@ -904,7 +904,7 @@ for i in range(0, boardLength):
 
 pygame.display.update()
 
-spritesheet = pygame.image.load('pieces.png').convert_alpha()
+spritesheet = pygame.image.load('../../../OneDrive - Ridgeway Education Trust/chess/pieces.png').convert_alpha()
 
 cols = 6
 rows = 2
