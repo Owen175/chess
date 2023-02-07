@@ -3,7 +3,7 @@ import pygame
 
 class Pawn:
     def __init__(self, x, y, colour):
-        self.canDoubleMove = True
+        self.hasMoved = False
         self.x = x
         self.y = y
         self.colour = colour
@@ -21,7 +21,7 @@ class Pawn:
                     self.x = mX
                     self.y = mY
                     print('Piece taken')
-                if mY == self.y + 2 and self.canDoubleMove == True and mX == self.x:
+                if mY == self.y + 2 and self.hasMoved == False and mX == self.x and board[self.x][self.y+1] == 0 and board[mX][mY] == 0:
                     self.y = mY
                 if mY == self.y + 1 and board[mX][mY] == 0 and mX == self.x:
                     self.y = mY
@@ -30,7 +30,7 @@ class Pawn:
                 if mY == self.y - 1 and (mX - self.x) ** 2 == 1 and isOppPiece(self.colour, mX, mY):
                     self.x = mX
                     self.y = mY
-                if mY == self.y - 2 and self.canDoubleMove == True and mX == self.x:
+                if mY == self.y - 2 and self.hasMoved == False and mX == self.x and board[self.x][self.y-1] == 0 and board[mX][mY] == 0:
                     self.y = mY
                 if mY == self.y - 1 and board[mX][mY] == 0 and mX == self.x:
                     self.y = mY
@@ -49,7 +49,6 @@ class Pawn:
         elif self.colour is False and self.y == 0:
             promote(self.colour, self.x, self.y)
 
-        self.canDoubleMove = False
         return True
 
     def calcPossMoves(self):
@@ -66,6 +65,8 @@ class Pawn:
             if self.y > 0:
                 if board[self.x][self.y - 1] == 0:
                     moves.append((self.x, self.y - 1))
+            if self.hasMoved == False and board[self.x][self.y-1] == 0 and board[self.x][self.y-2] == 0:
+                moves.append((self.x, self.y-2))
         else:
             if self.y < 7:
                 if self.x < 7:
@@ -78,6 +79,8 @@ class Pawn:
             if self.y < 7:
                 if board[self.x][self.y + 1] == 0:
                     moves.append((self.x, self.y + 1))
+            if self.hasMoved == False and board[self.x][self.y+1] == 0 and board[self.x][self.y+2] == 0:
+                moves.append((self.x, self.y+2))
         # Add the rest
 
         movesWithCoords = []
@@ -94,6 +97,7 @@ class Castle:
         self.x = x
         self.y = y
         self.id = 4
+        self.hasMoved = False
         if colour:
             self.id += 6
 
@@ -220,6 +224,7 @@ class Bishop:
         self.x = x
         self.y = y
         self.id = 2
+        self.hasMoved = False
         if colour:
             self.id += 6
 
@@ -347,6 +352,7 @@ class Queen:
         self.y = y
         self.colour = colour
         self.id = 1
+        self.hasMoved = False
         if colour:
             self.id += 6
 
@@ -570,6 +576,7 @@ class Knight:
         self.x = x
         self.y = y
         self.id = 3
+        self.hasMoved = False
         if colour:
             self.id += 6
 
@@ -611,6 +618,7 @@ class King:
         self.id = 0
         if colour:
             self.id += 6
+        self.hasMoved = False
 
     def calcPossMoves(self):
         moves = [(self.x + 1, self.y), (self.x + 1, self.y + 1), (self.x, self.y + 1), (self.x - 1, self.y),
@@ -619,22 +627,28 @@ class King:
         movableSquares = []
         for i, move in enumerate(moves):
             if 7 >= move[0] >= 0 and 7 >= move[1] >= 0:
-                if not checkForCheck(self.colour):
+                if not checkForCheck(self.colour, move):
+                    print(move)
                     movableSquares.append(move)
                     if board[move[0]][move[1]] == 0 or isOppPiece(self.colour, move[0], move[1]):
                         possMoves.append(move)
-
+        castleMoves = canCastle(self.colour)
+        possMoves.extend(castleMoves)
+        print(possMoves)
         movesWithCoords = []
 
         for m in possMoves:
             movesWithCoords.append((m, (self.x, self.y)))
-
         return possMoves, movableSquares, movesWithCoords
 
     def move(self, mX, mY):
         moves, _, _ = self.calcPossMoves()
         if (mX, mY) in moves:
             if self.colour == turn:
+                if abs(mX - self.x) != 0 and abs(mX - self.x) != 1:
+                    # It was a castle
+                    # Move the castle
+                    pass
                 self.x = mX
                 self.y = mY
             return True
@@ -642,8 +656,30 @@ class King:
             return False
 
 
-def checkForCheck(colour):
-    move = findKings(colour)
+def canCastle(colour):
+    retStatement = []
+    if colour:
+        if type(board[0][7]) == Castle and type(board[4][7]) == King:
+            if not board[0][7].hasMoved and not board[4][7].hasMoved and board[1][7] == 0 and board[2][7] == 0 and \
+                    board[3][7] == 0:
+                retStatement.append((2, 7))
+        if type(board[7][7]) == Castle and type(board[4][7]) == King:
+            if not board[7][7].hasMoved and not board[4][7].hasMoved and board[6][7] == 0 and board[5][7] == 0:
+                retStatement.append((6, 7))
+    else:
+        if type(board[0][0]) == Castle and type(board[4][0]) == King:
+            if not board[0][0].hasMoved and not board[4][0].hasMoved and board[1][0] == 0 and board[2][0] == 0 and \
+                    board[3][0] == 0:
+                retStatement.append((2, 0))
+        if type(board[7][0]) == Castle and type(board[4][0]) == King:
+            if not board[7][0].hasMoved and not board[4][0].hasMoved and board[6][0] == 0 and board[5][0] == 0:
+                retStatement.append((6, 0))
+    return retStatement
+
+
+def checkForCheck(colour, move=None):
+    if move == None:
+        move = findKings(colour)
 
     x, y = move
     diagonals = checkDiagonals(move, colour)
@@ -663,18 +699,21 @@ def checkForCheck(colour):
             if tp == Bishop or tp == Queen:
                 if board[danger[0]][danger[1]].colour:
                     returnStatement = True
+                    print('Diagonals')
 
         for danger in horizontals:
             tp = type(board[danger[0]][danger[1]])
             if tp == Castle or tp == Queen:
                 if board[danger[0]][danger[1]].colour:
                     returnStatement = True
+                    print('Horizontals')
 
         for danger in lShapes:
             tp = type(board[danger[0]][danger[1]])
             if tp == Knight:
                 if board[danger[0]][danger[1]].colour:
                     returnStatement = True
+                    print('LShapes')
     else:
         if y > 0 and x > 0:
             if type(board[x - 1][y - 1]) == Pawn and not board[x - 1][y - 1].colour:
@@ -688,19 +727,23 @@ def checkForCheck(colour):
             if tp == Bishop or tp == Queen:
                 if not board[danger[0]][danger[1]].colour:
                     returnStatement = True
+                    print('Diagonals')
 
         for danger in horizontals:
             tp = type(board[danger[0]][danger[1]])
             if tp == Castle or tp == Queen:
                 if not board[danger[0]][danger[1]].colour:
                     returnStatement = True
+                    print('Horizontals')
 
         for danger in lShapes:
             tp = type(board[danger[0]][danger[1]])
             if tp == Knight:
                 if not board[danger[0]][danger[1]].colour:
                     returnStatement = True
+                    print('LShapes')
     return returnStatement
+
 
 def checkLShapes(move):
     x, y = move
@@ -842,6 +885,7 @@ def makeMovableGrids():
                     whiteList.extend(moves)
     return list(set(blackList)), list(set(whiteList))
 
+
 def getValidMoves(colour):
     validMoves = []
     for y in range(8):
@@ -853,10 +897,13 @@ def getValidMoves(colour):
     validMoves = list(set(validMoves))
     return validMoves
 
+
 def checkForMate(colour):
     global board
     allMoves = getValidMoves(colour)
+    print(colour)
     # Check if king moves work properly -
+    # print(allMoves, 'AM')
     if checkForCheck(colour):
         for move in allMoves:
             newpos, oldpos = move
@@ -867,6 +914,7 @@ def checkForMate(colour):
             if not checkForCheck(colour):
                 board[oldpos[0]][oldpos[1]] = oldOld
                 board[newpos[0]][newpos[1]] = oldNew
+                print(move, 'm')
                 return False
             board[oldpos[0]][oldpos[1]] = oldOld
             board[newpos[0]][newpos[1]] = oldNew
@@ -875,8 +923,6 @@ def checkForMate(colour):
         if allMoves == []:
             return 'SM'
     return False
-
-
 
 
 def isOppPiece(colour, x, y):
@@ -1026,10 +1072,17 @@ while not gameExit:
             gameExit = True
         if event.type == pygame.MOUSEBUTTONDOWN:
             pos = getCoors(pygame.mouse.get_pos())
+            print('1')
             if pos1 is not None:
+                print('2')
+
                 pos2 = pos
                 if turn == board[pos1[0]][pos1[1]].colour:
-                    if board[pos1[0]][pos1[1]].move(pos2[0], pos2[1]):
+                    print('3')
+                    canMove = board[pos1[0]][pos1[1]].move(pos2[0], pos2[1])
+                    print(canMove)
+                    if canMove:
+                        print('4')
                         noDraw = False
                         oG2 = board[pos2[0]][pos2[1]]
                         board[pos2[0]][pos2[1]] = board[pos1[0]][pos1[1]]
@@ -1065,17 +1118,21 @@ while not gameExit:
                             gameDisplay.blit(spritesheet,
                                              (pos2[0] * size + (size - 83) / 2, (7 - pos2[1]) * size + (size - 83) / 2),
                                              cells[board[pos2[0]][pos2[1]].id])
-
+                            board[pos2[0]][pos2[1]].hasMoved = True
                             pygame.display.update()
                             if checkForMate(not turn):
                                 print('MATE')
+                            [print(row) for row in board]
+                            print('\n')
                             turn = not turn
                         else:
                             board[pos1[0]][pos1[1]] = board[pos2[0]][pos2[1]]
                             board[pos2[0]][pos2[1]] = oG2
                             if checkForMate(not turn):
                                 print('MATE')
-                        #May need to revert the x, y in the class too.
+                            [print(row) for row in board]
+                            print('\n')
+                        # May need to revert the x, y in the class too.
                         # blackG, whiteG = makeMovableGrids()
                         # checkForCheckmate(blackG, whiteG)
 
