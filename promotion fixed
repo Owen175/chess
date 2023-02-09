@@ -1,0 +1,1159 @@
+import pygame
+
+
+class Pawn:
+    def __init__(self, x, y, colour):
+        self.hasMoved = False
+        self.x = x
+        self.y = y
+        self.colour = colour
+        self.id = 5
+        if colour:
+            self.id += 6
+
+    def move(self, mX, mY):
+        global castleMove
+        global castlePiece
+        castlePiece = None
+        castleMove = False
+        initX = self.x
+        initY = self.y
+
+        if not self.colour:
+            if self.colour == turn:
+                if mY == self.y + 1 and (mX - self.x) ** 2 == 1 and isOppPiece(self.colour, mX, mY):
+                    self.x = mX
+                    self.y = mY
+                    print('Piece taken')
+                if mY == self.y + 2 and self.hasMoved == False and mX == self.x and board[self.x][self.y+1] == 0 and board[mX][mY] == 0:
+                    self.y = mY
+                if mY == self.y + 1 and board[mX][mY] == 0 and mX == self.x:
+                    self.y = mY
+        if self.colour:
+            if self.colour == turn:
+                if mY == self.y - 1 and (mX - self.x) ** 2 == 1 and isOppPiece(self.colour, mX, mY):
+                    self.x = mX
+                    self.y = mY
+                if mY == self.y - 2 and self.hasMoved == False and mX == self.x and board[self.x][self.y-1] == 0 and board[mX][mY] == 0:
+                    self.y = mY
+                if mY == self.y - 1 and board[mX][mY] == 0 and mX == self.x:
+                    self.y = mY
+
+        if self.x == initX and self.y == initY:
+            print('Invalid move')
+            return False
+        if self.x < 0 or self.x > 7 or self.y < 0 or self.y > 7:
+            self.x = initX
+            self.y = initY
+            print('Out of bounds')
+            return False
+
+        if self.colour and self.y == 0:
+            move = promote(self.colour, mX, mY)
+            castleMove = True
+            castlePiece = move
+            print(castlePiece.colour, castlePiece.x, castlePiece.y)
+
+        elif self.colour is False and self.y == 7:
+            move = promote(self.colour, mX, mY)
+            castleMove = True
+            castlePiece = move
+            print(castlePiece)
+        return True
+
+    def calcPossMoves(self):
+        moves = []
+        if self.colour:
+            if self.y > 0:
+                if self.x > 0:
+                    if isOppPiece(self.colour, self.x - 1, self.y - 1):
+                        moves.append((self.x - 1, self.y - 1))
+                if self.x < 7:
+                    if isOppPiece(self.colour, self.x + 1, self.y - 1):
+                        moves.append((self.x + 1, self.y - 1))
+                moves.append((self.x, self.y - 1))
+            if self.y > 0:
+                if board[self.x][self.y - 1] == 0:
+                    moves.append((self.x, self.y - 1))
+            if self.hasMoved == False and board[self.x][self.y-1] == 0 and board[self.x][self.y-2] == 0:
+                moves.append((self.x, self.y-2))
+        else:
+            if self.y < 7:
+                if self.x < 7:
+                    if isOppPiece(self.colour, self.x + 1, self.y + 1):
+                        moves.append((self.x + 1, self.y + 1))
+                if self.x > 0:
+                    if isOppPiece(self.colour, self.x - 1, self.y + 1):
+                        moves.append((self.x - 1, self.y + 1))
+                moves.append((self.x, self.y + 1))
+            if self.y < 7:
+                if board[self.x][self.y + 1] == 0:
+                    moves.append((self.x, self.y + 1))
+            if self.hasMoved == False and board[self.x][self.y+1] == 0 and board[self.x][self.y+2] == 0:
+                moves.append((self.x, self.y+2))
+        # Add the rest
+
+        movesWithCoords = []
+
+        for m in moves:
+            movesWithCoords.append((m, (self.x, self.y)))
+
+        return moves, '_', movesWithCoords
+
+
+class Castle:
+    def __init__(self, x, y, colour):
+        self.colour = colour
+        self.x = x
+        self.y = y
+        self.id = 4
+        self.hasMoved = False
+        if colour:
+            self.id += 6
+
+    def calcPossMoves(self):
+        movables = []
+        cont = True
+        count = 0
+        possListRight = []
+        while cont:
+            if self.x < 7:
+                count += 1
+                if self.x + count == 7:
+                    cont = False
+                possListRight.append((self.x + count, self.y))
+            else:
+                cont = False
+        finalPossListRight = []
+        end = False
+        for j, comp in enumerate(possListRight):
+            if not end:
+                if isOppPiece(self.colour, comp[0], comp[1]):
+                    finalPossListRight.append(comp)
+                    end = True
+                elif board[comp[0]][comp[1]] == 0:
+                    finalPossListRight.append(comp)
+                else:
+                    end = True
+                movables.append(comp)
+
+        cont = True
+        count = 0
+        possListLeft = []
+        while cont:
+            if self.x > 0:
+                count += 1
+                if self.x - count == 0:
+                    cont = False
+                possListLeft.append((self.x - count, self.y))
+            else:
+                cont = False
+        finalPossListLeft = []
+        end = False
+        for j, comp in enumerate(possListLeft):
+            if not end:
+                if isOppPiece(self.colour, comp[0], comp[1]):
+                    finalPossListLeft.append(comp)
+                    end = True
+                elif board[comp[0]][comp[1]] == 0:
+                    finalPossListLeft.append(comp)
+                else:
+                    end = True
+                movables.append(comp)
+
+        cont = True
+        count = 0
+        possListUp = []
+        while cont:
+            if self.y < 7:
+                count += 1
+                if self.y + count == 7:
+                    cont = False
+                possListUp.append((self.x, self.y + count))
+            else:
+                cont = False
+        finalPossListUp = []
+        end = False
+        for j, comp in enumerate(possListUp):
+            if not end:
+                if isOppPiece(self.colour, comp[0], comp[1]):
+                    finalPossListUp.append(comp)
+                    end = True
+                elif board[comp[0]][comp[1]] == 0:
+                    finalPossListUp.append(comp)
+                else:
+                    end = True
+                movables.append(comp)
+
+        cont = True
+        count = 0
+        possListDown = []
+        while cont:
+            if self.y > 0:
+                count += 1
+                if self.y - count == 0:
+                    cont = False
+                possListDown.append((self.x, self.y - count))
+            else:
+                cont = False
+        finalPossListDown = []
+        end = False
+        for j, comp in enumerate(possListDown):
+            if not end:
+                if isOppPiece(self.colour, comp[0], comp[1]):
+                    finalPossListDown.append(comp)
+                    end = True
+                elif board[comp[0]][comp[1]] == 0:
+                    finalPossListDown.append(comp)
+                else:
+                    end = True
+                movables.append(comp)
+        moves = finalPossListDown + finalPossListUp + finalPossListLeft + finalPossListRight
+
+        movesWithCoords = []
+
+        for m in moves:
+            movesWithCoords.append((m, (self.x, self.y)))
+
+        return moves, movables, movesWithCoords
+
+    def move(self, mX, mY):
+        moves, _, _ = self.calcPossMoves()
+        if (mX, mY) in moves:
+            if self.colour == turn:
+                self.x = mX
+                self.y = mY
+            return True
+        else:
+            return False
+
+
+class Bishop:
+    def __init__(self, x, y, colour):
+        self.colour = colour
+        self.x = x
+        self.y = y
+        self.id = 2
+        self.hasMoved = False
+        if colour:
+            self.id += 6
+
+    def calcPossMoves(self):
+        movables = []
+        rightUp = []
+        cont = True
+        count = 0
+        while cont:
+            if self.x < 7 and self.y < 7:
+                count += 1
+                if self.x + count == 7 or self.y + count == 7:
+                    cont = False
+                rightUp.append((self.x + count, self.y + count))
+            else:
+                cont = False
+        finalRightUp = []
+        end = False
+        for j, comp in enumerate(rightUp):
+            if not end:
+                if isOppPiece(self.colour, comp[0], comp[1]):
+                    finalRightUp.append(comp)
+                    end = True
+                elif board[comp[0]][comp[1]] == 0:
+                    finalRightUp.append(comp)
+                else:
+                    end = True
+                movables.append(comp)
+
+        rightDown = []
+        cont = True
+        count = 0
+        while cont:
+            if self.x < 7 and self.y > 0:
+                count += 1
+                if self.x + count == 7 or self.y - count == 0:
+                    cont = False
+                rightDown.append((self.x + count, self.y - count))
+            else:
+                cont = False
+        finalRightDown = []
+        end = False
+        for j, comp in enumerate(rightDown):
+            if not end:
+                if isOppPiece(self.colour, comp[0], comp[1]):
+                    finalRightDown.append(comp)
+                    end = True
+                elif board[comp[0]][comp[1]] == 0:
+                    finalRightDown.append(comp)
+                else:
+                    end = True
+                movables.append(comp)
+
+        leftUp = []
+        cont = True
+        count = 0
+        while cont:
+            if self.x > 0 and self.y < 7:
+                count += 1
+                if self.x - count == 0 or self.y + count == 7:
+                    cont = False
+                leftUp.append((self.x - count, self.y + count))
+            else:
+                cont = False
+        finalLeftUp = []
+        end = False
+        for j, comp in enumerate(leftUp):
+            if not end:
+                if isOppPiece(self.colour, comp[0], comp[1]):
+                    finalLeftUp.append(comp)
+                    end = True
+                elif board[comp[0]][comp[1]] == 0:
+                    finalLeftUp.append(comp)
+                else:
+                    end = True
+                movables.append(comp)
+
+        leftDown = []
+        cont = True
+        count = 0
+        while cont:
+            if self.x > 0 and self.y > 0:
+                count += 1
+                if self.x - count == 0 or self.y - count == 7:
+                    cont = False
+                leftDown.append((self.x - count, self.y - count))
+            else:
+                cont = False
+        finalLeftDown = []
+        end = False
+        for j, comp in enumerate(leftDown):
+            if not end:
+                if isOppPiece(self.colour, comp[0], comp[1]):
+                    finalLeftDown.append(comp)
+                    end = True
+                elif board[comp[0]][comp[1]] == 0:
+                    finalLeftDown.append(comp)
+                else:
+                    end = True
+                movables.append(comp)
+
+        moves = finalLeftUp + finalLeftDown + finalRightDown + finalRightUp
+
+        movesWithCoords = []
+
+        for m in moves:
+            movesWithCoords.append((m, (self.x, self.y)))
+
+        return moves, movables, movesWithCoords
+
+    def move(self, mX, mY):
+        moves, _, _ = self.calcPossMoves()
+        if (mX, mY) in moves:
+            if self.colour == turn:
+                self.x = mX
+                self.y = mY
+            return True
+        else:
+            return False
+
+
+class Queen:
+    def __init__(self, x, y, colour):
+        self.x = x
+        self.y = y
+        self.colour = colour
+        self.id = 1
+        self.hasMoved = False
+        if colour:
+            self.id += 6
+
+    def calcPossMoves(self):
+        movables = []
+        rightUp = []
+        cont = True
+        count = 0
+        while cont:
+            if self.x < 7 and self.y < 7:
+                count += 1
+                if self.x + count == 7 or self.y + count == 7:
+                    cont = False
+                rightUp.append((self.x + count, self.y + count))
+            else:
+                cont = False
+        finalRightUp = []
+        end = False
+        for j, comp in enumerate(rightUp):
+            if not end:
+                if isOppPiece(self.colour, comp[0], comp[1]):
+                    finalRightUp.append(comp)
+                    end = True
+                elif board[comp[0]][comp[1]] == 0:
+                    finalRightUp.append(comp)
+                else:
+                    end = True
+                movables.append(comp)
+
+        rightDown = []
+        cont = True
+        count = 0
+        while cont:
+            if self.x < 7 and self.y > 0:
+                count += 1
+                if self.x + count == 7 or self.y - count == 0:
+                    cont = False
+                rightDown.append((self.x + count, self.y - count))
+            else:
+                cont = False
+        finalRightDown = []
+        end = False
+        for j, comp in enumerate(rightDown):
+            if not end:
+                if isOppPiece(self.colour, comp[0], comp[1]):
+                    finalRightDown.append(comp)
+                    end = True
+                elif board[comp[0]][comp[1]] == 0:
+                    finalRightDown.append(comp)
+                else:
+                    end = True
+
+                movables.append(comp)
+
+        leftUp = []
+        cont = True
+        count = 0
+        while cont:
+            if self.x > 0 and self.y < 7:
+                count += 1
+                if self.x - count == 0 or self.y + count == 7:
+                    cont = False
+                leftUp.append((self.x - count, self.y + count))
+            else:
+                cont = False
+        finalLeftUp = []
+        end = False
+        for j, comp in enumerate(leftUp):
+            if not end:
+                if isOppPiece(self.colour, comp[0], comp[1]):
+                    finalLeftUp.append(comp)
+                    end = True
+                elif board[comp[0]][comp[1]] == 0:
+                    finalLeftUp.append(comp)
+                else:
+                    end = True
+                movables.append(comp)
+
+        leftDown = []
+        cont = True
+        count = 0
+        while cont:
+            if self.x > 0 and self.y > 0:
+                count += 1
+                if self.x - count == 0 or self.y - count == 7:
+                    cont = False
+                leftDown.append((self.x - count, self.y - count))
+            else:
+                cont = False
+        finalLeftDown = []
+        end = False
+        for j, comp in enumerate(leftDown):
+            if not end:
+                if isOppPiece(self.colour, comp[0], comp[1]):
+                    finalLeftDown.append(comp)
+                    end = True
+                elif board[comp[0]][comp[1]] == 0:
+                    finalLeftDown.append(comp)
+                else:
+                    end = True
+                movables.append(comp)
+
+        cont = True
+        count = 0
+        possListRight = []
+        while cont:
+            if self.x < 7:
+                count += 1
+                if self.x + count == 7:
+                    cont = False
+                possListRight.append((self.x + count, self.y))
+            else:
+                cont = False
+        finalPossListRight = []
+        end = False
+        for j, comp in enumerate(possListRight):
+            if not end:
+                if isOppPiece(self.colour, comp[0], comp[1]):
+                    finalPossListRight.append(comp)
+                    end = True
+                elif board[comp[0]][comp[1]] == 0:
+                    finalPossListRight.append(comp)
+                else:
+                    end = True
+                movables.append(comp)
+
+        cont = True
+        count = 0
+        possListLeft = []
+        while cont:
+            if self.x > 0:
+                count += 1
+                if self.x - count == 0:
+                    cont = False
+                possListLeft.append((self.x - count, self.y))
+            else:
+                cont = False
+        finalPossListLeft = []
+        end = False
+        for j, comp in enumerate(possListLeft):
+            if not end:
+                if isOppPiece(self.colour, comp[0], comp[1]):
+                    finalPossListLeft.append(comp)
+                    end = True
+                elif board[comp[0]][comp[1]] == 0:
+                    finalPossListLeft.append(comp)
+                else:
+                    end = True
+                movables.append(comp)
+
+        cont = True
+        count = 0
+        possListUp = []
+        while cont:
+            if self.y < 7:
+                count += 1
+                if self.y + count == 7:
+                    cont = False
+                possListUp.append((self.x, self.y + count))
+            else:
+                cont = False
+        finalPossListUp = []
+        end = False
+        for j, comp in enumerate(possListUp):
+            if not end:
+                if isOppPiece(self.colour, comp[0], comp[1]):
+                    finalPossListUp.append(comp)
+                    end = True
+                elif board[comp[0]][comp[1]] == 0:
+                    finalPossListUp.append(comp)
+                else:
+                    end = True
+                movables.append(comp)
+
+        cont = True
+        count = 0
+        possListDown = []
+        while cont:
+            if self.y > 0:
+                count += 1
+                if self.y - count == 0:
+                    cont = False
+                possListDown.append((self.x, self.y - count))
+            else:
+                cont = False
+        finalPossListDown = []
+        end = False
+        for j, comp in enumerate(possListDown):
+            if not end:
+                if isOppPiece(self.colour, comp[0], comp[1]):
+                    finalPossListDown.append(comp)
+                    end = True
+                elif board[comp[0]][comp[1]] == 0:
+                    finalPossListDown.append(comp)
+                else:
+                    end = True
+                movables.append(comp)
+
+        moves = finalPossListDown + finalPossListUp + finalPossListLeft + finalPossListRight + finalRightDown + finalRightUp + finalLeftUp + finalLeftDown
+        movesWithCoords = []
+
+        for m in moves:
+            movesWithCoords.append((m, (self.x, self.y)))
+
+        return moves, movables, movesWithCoords
+
+    def move(self, mX, mY):
+        moves, _, _ = self.calcPossMoves()
+        if (mX, mY) in moves:
+            if self.colour == turn:
+                self.x = mX
+                self.y = mY
+            return True
+        else:
+            return False
+
+
+class Knight:
+    def __init__(self, x, y, colour):
+        self.colour = colour
+        self.x = x
+        self.y = y
+        self.id = 3
+        self.hasMoved = False
+        if colour:
+            self.id += 6
+
+    def calcPossMoves(self):
+        moves = [(self.x + 1, self.y + 2), (self.x - 1, self.y + 2), (self.x - 1, self.y - 2), (self.x + 1, self.y - 2),
+                 (self.x + 2, self.y + 1),
+                 (self.x + 2, self.y - 1), (self.x - 2, self.y + 1), (self.x - 2, self.y - 1)]
+        possMoves = []
+        movables = []
+        for i, move in enumerate(moves):
+            if 7 >= move[0] >= 0 and 7 >= move[1] >= 0:
+                movables.append(move)
+                if board[move[0]][move[1]] == 0 or isOppPiece(self.colour, move[0], move[1]):
+                    possMoves.append(move)
+
+        movesWithCoords = []
+
+        for m in possMoves:
+            movesWithCoords.append((m, (self.x, self.y)))
+
+        return possMoves, movables, movesWithCoords
+
+    def move(self, mX, mY):
+        moves, _, _ = self.calcPossMoves()
+        if (mX, mY) in moves:
+            if self.colour == turn:
+                self.x = mX
+                self.y = mY
+            return True
+        else:
+            return False
+
+
+class King:
+    def __init__(self, x, y, colour):
+        self.x = x
+        self.y = y
+        self.colour = colour
+        self.id = 0
+        if colour:
+            self.id += 6
+        self.hasMoved = False
+
+    def calcPossMoves(self):
+        moves = [(self.x + 1, self.y), (self.x + 1, self.y + 1), (self.x, self.y + 1), (self.x - 1, self.y),
+                 (self.x + 1, self.y - 1), (self.x - 1, self.y - 1), (self.x - 1, self.y + 1), (self.x, self.y - 1)]
+        possMoves = []
+        movableSquares = []
+        for i, move in enumerate(moves):
+            if 7 >= move[0] >= 0 and 7 >= move[1] >= 0:
+                if not checkForCheck(self.colour, move):
+                    movableSquares.append(move)
+                    if board[move[0]][move[1]] == 0 or isOppPiece(self.colour, move[0], move[1]):
+                        possMoves.append(move)
+        castleMoves = canCastle(self.colour)
+        possMoves.extend(castleMoves)
+        movesWithCoords = []
+
+        for m in possMoves:
+            movesWithCoords.append((m, (self.x, self.y)))
+        return possMoves, movableSquares, movesWithCoords
+
+    def move(self, mX, mY):
+        moves, _, _ = self.calcPossMoves()
+        if (mX, mY) in moves:
+            if self.colour == turn:
+                if abs(mX - self.x) != 0 and abs(mX - self.x) != 1:
+                    # It was a castle
+                    # Move the castle
+                    pass
+                self.x = mX
+                self.y = mY
+            return True
+        else:
+            return False
+
+
+def canCastle(colour):
+    retStatement = []
+    if colour:
+        if type(board[0][7]) == Castle and type(board[4][7]) == King:
+            if not board[0][7].hasMoved and not board[4][7].hasMoved and board[1][7] == 0 and board[2][7] == 0 and \
+                    board[3][7] == 0:
+                retStatement.append((2, 7))
+        if type(board[7][7]) == Castle and type(board[4][7]) == King:
+            if not board[7][7].hasMoved and not board[4][7].hasMoved and board[6][7] == 0 and board[5][7] == 0:
+                retStatement.append((6, 7))
+    else:
+        if type(board[0][0]) == Castle and type(board[4][0]) == King:
+            if not board[0][0].hasMoved and not board[4][0].hasMoved and board[1][0] == 0 and board[2][0] == 0 and \
+                    board[3][0] == 0:
+                retStatement.append((2, 0))
+        if type(board[7][0]) == Castle and type(board[4][0]) == King:
+            if not board[7][0].hasMoved and not board[4][0].hasMoved and board[6][0] == 0 and board[5][0] == 0:
+                retStatement.append((6, 0))
+    return retStatement
+
+
+def checkForCheck(colour, move=None):
+    if move == None:
+        move = findKings(colour)
+
+    x, y = move
+    diagonals = checkDiagonals(move, colour)
+    horizontals = checkHorizontals(move, colour)
+    lShapes = checkLShapes(move)
+    returnStatement = False
+    if not colour:
+        if y < 7 and x > 0:
+            if type(board[x - 1][y + 1]) == Pawn and board[x - 1][y + 1].colour:
+                returnStatement = True
+        if y < 7 and x < 7:
+            if type(board[x + 1][y + 1]) == Pawn and board[x + 1][y + 1].colour:
+                returnStatement = True
+
+        for danger in diagonals:
+            tp = type(board[danger[0]][danger[1]])
+            if tp == Bishop or tp == Queen:
+                if board[danger[0]][danger[1]].colour:
+                    returnStatement = True
+
+        for danger in horizontals:
+            tp = type(board[danger[0]][danger[1]])
+            if tp == Castle or tp == Queen:
+                if board[danger[0]][danger[1]].colour:
+                    returnStatement = True
+
+        for danger in lShapes:
+            tp = type(board[danger[0]][danger[1]])
+            if tp == Knight:
+                if board[danger[0]][danger[1]].colour:
+                    returnStatement = True
+    else:
+        if y > 0 and x > 0:
+            if type(board[x - 1][y - 1]) == Pawn and not board[x - 1][y - 1].colour:
+                returnStatement = True
+        if y > 0 and x < 7:
+            if type(board[x + 1][y - 1]) == Pawn and not board[x + 1][y - 1].colour:
+                returnStatement = True
+
+        for danger in diagonals:
+            tp = type(board[danger[0]][danger[1]])
+            if tp == Bishop or tp == Queen:
+                if not board[danger[0]][danger[1]].colour:
+                    returnStatement = True
+                    print('Diagonals')
+
+        for danger in horizontals:
+            tp = type(board[danger[0]][danger[1]])
+            if tp == Castle or tp == Queen:
+                if not board[danger[0]][danger[1]].colour:
+                    returnStatement = True
+                    print('Horizontals')
+
+        for danger in lShapes:
+            tp = type(board[danger[0]][danger[1]])
+            if tp == Knight:
+                if not board[danger[0]][danger[1]].colour:
+                    returnStatement = True
+                    print('LShapes')
+    return returnStatement
+
+
+def checkLShapes(move):
+    x, y = move
+    places = [(x + 1, y + 2), (x - 1, y + 2), (x - 1, y - 2), (x + 1, y - 2),
+              (x + 2, y + 1),
+              (x + 2, y - 1), (x - 2, y + 1), (x - 2, y - 1)]
+
+    onBoard = []
+    for place in places:
+        if 7 > place[0] > 0 and 7 > place[1] > 0:
+            onBoard.append(place)
+
+    return onBoard
+
+
+def checkHorizontals(move, colour):
+    x, y = move
+    cont = True
+    horizontalList = []
+    while x < 7 and cont:
+        x += 1
+        if board[x][y] != 0:
+            if type(board[x][y]) == King and board[x][y].colour == colour:
+                pass
+            else:
+                cont = False
+                horizontalList.append((x, y))
+
+    x, y = move
+    cont = True
+    while x > 0 and cont:
+        x -= 1
+        if board[x][y] != 0:
+            if type(board[x][y]) == King and board[x][y].colour == colour:
+                pass
+            else:
+                cont = False
+                horizontalList.append((x, y))
+
+    x, y = move
+    cont = True
+    while y > 0 and cont:
+        y -= 1
+        if board[x][y] != 0:
+            if type(board[x][y]) == King and board[x][y].colour == colour:
+                pass
+            else:
+                cont = False
+                horizontalList.append((x, y))
+
+    x, y = move
+    cont = True
+    while y < 7 and cont:
+        y += 1
+        if board[x][y] != 0:
+            if type(board[x][y]) == King and board[x][y].colour == colour:
+                pass
+            else:
+                cont = False
+                horizontalList.append((x, y))
+
+    return horizontalList
+
+
+def checkDiagonals(move, colour):
+    x, y = move
+    cont = True
+    diagonalList = []
+    while x < 7 and y < 7 and cont:
+        x += 1
+        y += 1
+        if board[x][y] != 0:
+            if type(board[x][y]) == King and board[x][y].colour == colour:
+                pass
+            else:
+                cont = False
+                diagonalList.append((x, y))
+
+    x, y = move
+    cont = True
+    while x > 0 and y < 7 and cont:
+        x -= 1
+        y += 1
+        if board[x][y] != 0:
+            if type(board[x][y]) == King and board[x][y].colour == colour:
+                pass
+            else:
+                cont = False
+                diagonalList.append((x, y))
+
+    x, y = move
+    cont = True
+    while x > 0 and y > 0 and cont:
+        x -= 1
+        y -= 1
+        if board[x][y] != 0:
+            if type(board[x][y]) == King and board[x][y].colour == colour:
+                pass
+            else:
+                cont = False
+                diagonalList.append((x, y))
+
+    x, y = move
+    cont = True
+    while x < 7 and y > 0 and cont:
+        x += 1
+        y -= 1
+        if board[x][y] != 0:
+            if type(board[x][y]) == King and board[x][y].colour == colour:
+                pass
+            else:
+                cont = False
+                diagonalList.append((x, y))
+
+    return diagonalList
+
+
+# def checkForCheckmate(black, white, blak):
+
+
+# To check for checkmate, create another grid for each side to check
+# whether a piece can move there. [0, 1, 0, 1] etc. 0 being cant move, 1 being can. This makes it easy to check
+# whether you can take the piece threatening the king, or if you can block
+# Check for check then checkmate. If checkmate but not check, stalemate.
+# Need to make it so you cant ignore checkmate
+
+
+def makeMovableGrids():
+    blackList = []
+    whiteList = []
+    for y in range(8):
+        for x in range(8):
+            if board[x][y] != 0:
+                if board[x][y].colour == True:
+                    _, moves, _ = board[x][y].calcPossMoves()
+                    blackList.extend(moves)
+                else:
+                    _, moves, _ = board[x][y].calcPossMoves()
+                    whiteList.extend(moves)
+    return list(set(blackList)), list(set(whiteList))
+
+
+def getValidMoves(colour):
+    validMoves = []
+    for y in range(8):
+        for x in range(8):
+            if board[x][y] != 0:
+                if board[x][y].colour == colour:
+                    _, _, moves = board[x][y].calcPossMoves()
+                    validMoves.extend(moves)
+    validMoves = list(set(validMoves))
+    return validMoves
+
+
+def checkForMate(colour):
+    global board
+    allMoves = getValidMoves(colour)
+    # Check if king moves work properly -
+    # print(allMoves, 'AM')
+    if checkForCheck(colour):
+        for move in allMoves:
+            newpos, oldpos = move
+            oldNew = board[newpos[0]][newpos[1]]
+            oldOld = board[oldpos[0]][oldpos[1]]
+            board[oldpos[0]][oldpos[1]] = 0
+            board[newpos[0]][newpos[1]] = oldOld
+            if not checkForCheck(colour):
+                board[oldpos[0]][oldpos[1]] = oldOld
+                board[newpos[0]][newpos[1]] = oldNew
+                return False
+            board[oldpos[0]][oldpos[1]] = oldOld
+            board[newpos[0]][newpos[1]] = oldNew
+        return True
+    else:
+        if allMoves == []:
+            return 'SM'
+    return False
+
+
+def isOppPiece(colour, x, y):
+    if board[x][y] != 0:
+        if board[x][y].colour != colour:
+            return True
+    return False
+
+
+def promote(colour, x, y):
+    print('bishop = 1, queen = 2, knight = 3, castle = 4')
+    num = int(input())
+    while num != 1 and num != 2 and num!= 3 and num!= 4:
+        num = int(input())
+    if num == 1:
+        a = Bishop(x, y, colour)
+    elif num == 2:
+        a = Queen(x, y, colour)
+    elif num == 3:
+        a = Knight(x, y, colour)
+    else:
+        a = Castle(x, y, colour)
+    return a
+# Not quite working
+
+
+def findKings(colour):
+    for y in range(8):
+        for x in range(8):
+            if board[x][y] != 0:
+                if type(board[x][y]) == King and board[x][y].colour == colour:
+                    return (x, y)
+
+
+def getCoors(pos):
+    pos = (pos[0] // size, pos[1] // size)
+    if pos[0] < 0:
+        pos = (0, pos[1])
+    if pos[0] > 7:
+        pos = (7, pos[1])
+    if pos[1] < 0:
+        pos = (pos[0], 0)
+    if pos[1] > 7:
+        pos = (pos[0], 7)
+
+    pos = (pos[0], 7 - pos[1])
+    return int(pos[0]), int(pos[1])
+
+
+# Colour is bool
+board = [[0, 0, 0, 0, 0, 0, 0, 0],
+         [0, 0, 0, 0, 0, 0, 0, 0],
+         [0, 0, 0, 0, 0, 0, 0, 0],
+         [0, 0, 0, 0, 0, 0, 0, 0],
+         [0, 0, 0, 0, 0, 0, 0, 0],
+         [0, 0, 0, 0, 0, 0, 0, 0],
+         [0, 0, 0, 0, 0, 0, 0, 0],
+         [0, 0, 0, 0, 0, 0, 0, 0]]
+
+# Board is [x][y]
+
+for i in range(len(board)):
+    board[i][1] = Pawn(i, 1, False)
+    board[i][6] = Pawn(i, 6, True)
+
+board[7][7] = Castle(7, 7, True)
+board[0][7] = Castle(0, 7, True)
+board[7][0] = Castle(7, 0, False)
+board[0][0] = Castle(0, 0, False)
+
+board[5][7] = Bishop(5, 7, True)
+board[2][7] = Bishop(2, 7, True)
+board[5][0] = Bishop(5, 0, False)
+board[2][0] = Bishop(2, 0, False)
+
+board[1][7] = Knight(1, 7, True)
+board[6][7] = Knight(6, 7, True)
+board[1][0] = Knight(1, 0, False)
+board[6][0] = Knight(6, 0, False)
+
+board[3][0] = Queen(3, 0, False)
+board[3][7] = Queen(3, 7, True)
+
+board[4][0] = King(4, 0, False)
+board[4][7] = King(4, 7, True)
+pygame.init()
+# set color with rgb
+white, black = (232, 235, 239), (125, 135, 150)
+
+# set display
+width = 600
+gameDisplay = pygame.display.set_mode((width, width))
+
+# caption
+pygame.display.set_caption("Chess")
+boardLength = 8
+# Size of squares
+size = width//boardLength
+
+
+size = width/boardLength
+gameDisplay.fill(white)
+
+count = 0
+boardColours = []
+for i in range(0, boardLength):
+    bcTemp = []
+    for z in range(0, boardLength):
+        # check if current loop value is even
+        if count % 2 == 0:
+            pygame.draw.rect(gameDisplay, white, [size * z, size * i, size, size])
+            bcTemp.append(white)
+        else:
+            pygame.draw.rect(gameDisplay, black, [size * z, size * i, size, size])
+            bcTemp.append(black)
+        count += 1
+    count -= 1
+    boardColours.append(bcTemp)
+
+pygame.display.update()
+
+spritesheet = pygame.image.load('pieces.png').convert_alpha()
+
+cols = 6
+rows = 2
+cell_count = cols * rows
+
+rect = spritesheet.get_rect()
+w = cell_width = rect.width // cols
+h = cell_height = rect.height // rows
+
+cells = list([(i % cols * w, i // cols * h, w, h) for i in range(cell_count)])
+# 83x83
+
+
+# 0 - White king
+# 1 - White queen
+# 2 - White bishop
+# 3 - White knight
+# 4 - White castle
+# 5 - White pawn
+# + 6 for black
+
+
+pygame.display.update()
+
+gameExit = False
+turn = False  # White is false
+pos1 = None
+pos2 = None
+nextCheck = False
+for x in range(len(board)):
+    for y in range(len(board)):
+        if board[x][y] != 0:
+            gameDisplay.blit(spritesheet, (x * size + (size - 83) / 2, (7 - y) * size + (size - 83) / 2),
+                             cells[board[x][y].id])
+pygame.display.update()
+while not gameExit:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            gameExit = True
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            pos = getCoors(pygame.mouse.get_pos())
+            if pos1 is not None:
+                pos2 = pos
+                if turn == board[pos1[0]][pos1[1]].colour:
+                    canMove = board[pos1[0]][pos1[1]].move(pos2[0], pos2[1])
+                    if canMove:
+                        noDraw = False
+                        oG2 = board[pos2[0]][pos2[1]]
+                        oG1 = board[pos1[0]][pos1[1]]
+                        if castleMove == True:
+                            board[pos2[0]][pos2[1]] = castlePiece
+                        else:
+                            board[pos2[0]][pos2[1]] = board[pos1[0]][pos1[1]]
+                        board[pos1[0]][pos1[1]] = 0
+                        if checkForCheck(turn):
+                            nextCheck = True
+                            checkColour = turn
+                        if nextCheck:
+                            if checkForCheck(checkColour):
+                                noDraw = True
+                                print('Still in check')
+                                board[pos2[0]][pos2[1]].x = pos1[0]
+                                board[pos2[0]][pos2[1]].y = pos1[1]
+                            else:
+                                nextCheck = False
+
+                        if checkForCheck(not turn):
+                            print('check')
+                            nextCheck = True
+                            checkColour = not turn
+                            if turn == True:
+                                print('White King in check')
+                            else:
+                                print('Black King in check')
+
+                        if not noDraw:
+                            x, y = board[pos2[0]][pos2[1]].x, board[pos2[0]][pos2[1]].y
+
+                            pygame.draw.rect(gameDisplay, boardColours[x][7 - y],
+                                             [size * (x), size * (7 - y), size, size])
+                            pygame.draw.rect(gameDisplay, boardColours[pos1[0]][7 - pos1[1]],
+                                             [size * (pos1[0]), size * (7 - pos1[1]), size, size])
+                            gameDisplay.blit(spritesheet,
+                                             (pos2[0] * size + (size - 83) / 2, (7 - pos2[1]) * size + (size - 83) / 2),
+                                             cells[board[pos2[0]][pos2[1]].id])
+                            board[pos2[0]][pos2[1]].hasMoved = True
+                            pygame.display.update()
+                            if checkForMate(not turn):
+                                print('MATE')
+                            turn = not turn
+                        else:
+                            board[pos1[0]][pos1[1]] = oG1
+                            board[pos2[0]][pos2[1]] = oG2
+                            if checkForMate(not turn):
+                                print('MATE')
+                        # May need to revert the x, y in the class too.
+                        # blackG, whiteG = makeMovableGrids()
+                        # checkForCheckmate(blackG, whiteG)
+
+                else:
+                    print('invalid')
+                pos1 = None
+
+            else:
+                if board[pos[0]][pos[1]] == 0:
+                    pos1 = None
+
+                else:
+                    pos1 = pos
